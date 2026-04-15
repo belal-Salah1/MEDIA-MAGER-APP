@@ -1,3 +1,48 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project
+
+Laravel 13 + Inertia v3 + Vue 3 SPA built on the `laravel/blank-vue-starter-kit` skeleton. The app is in greenfield state: a single `/` route renders `resources/js/pages/Welcome.vue`, `app/Models/User.php` is the only model, and `app/Http/Controllers/` contains only the base `Controller.php`. Treat most scaffolding as "not yet written" — follow the Boost conventions below when adding the first controllers/pages/migrations.
+
+## Commands
+
+**Dev loop** (runs server + queue worker + `pail` log tail + Vite together via concurrently):
+```
+composer run dev
+```
+Use this instead of `php artisan serve` + `npm run dev` separately — the queue and log tail matter because `QUEUE_CONNECTION=database` and `CACHE_STORE=database` by default.
+
+**Tests** (Pest 4; `tests/Pest.php` extends `TestCase` for everything in `tests/Feature`; `RefreshDatabase` is commented out — enable per-file as needed):
+```
+php artisan test --compact
+php artisan test --compact --filter=TestName
+```
+`composer test` runs `config:clear` + `pint --test` + the suite. Test DB is forced to sqlite `:memory:` via `phpunit.xml`, regardless of `.env`.
+
+**Lint / format / types** (all three must pass for `composer ci:check`):
+```
+vendor/bin/pint --dirty --format agent   # PHP — run after editing PHP
+npm run lint                              # ESLint autofix
+npm run format                            # Prettier
+npm run types:check                       # vue-tsc --noEmit
+```
+
+**Wayfinder generation** is automatic via the Vite plugin (`vite.config.ts`) — no manual `wayfinder:generate` needed during `npm run dev` / `npm run build`. Generated output lives in `resources/js/actions/`, `resources/js/routes/`, `resources/js/wayfinder/`; do not hand-edit these.
+
+**Build**: `npm run build` (add `build:ssr` for SSR bundle — SSR also works automatically in dev via `@inertiajs/vite`).
+
+## Architecture notes that aren't obvious from the code
+
+- **Frontend entry is minimal**: `resources/js/app.ts` calls `createInertiaApp` with no page resolver or root component — `@inertiajs/vite` injects those at build time. If you need a persistent layout, use Inertia v3's `useLayoutProps` hook rather than importing a root layout in `app.ts`.
+- **Routing convention**: `routes/web.php` uses `Route::inertia('/', 'Welcome')` directly. When adding pages that don't need controller logic, prefer `Route::inertia()` over making an empty controller. For pages that do need data, add a controller and call `Inertia::render()`.
+- **DB stack**: project ships configured for SQLite (`database/database.sqlite` committed as the default). `.env` currently points at MySQL (`media_manager_app` DB, `media_manager` user) — if you clone fresh, swap back to SQLite or create the MySQL DB/user. Tests always use sqlite `:memory:` regardless.
+- **Session/cache/queue all default to `database`** (see `.env`). Running migrations is required before the app boots cleanly; the `jobs` and `cache` tables are created by the initial migrations (`database/migrations/0001_01_01_000001_*`, `...000002_*`).
+- **Vite plugin order matters**: `laravel()` → `inertia()` → `tailwindcss()` → `vue()` → `wayfinder({ formVariants: true })`. `formVariants: true` means Wayfinder emits `.form()` helpers for `<Form>` components in addition to `.get()`/`.post()`/`.url()`.
+
+---
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
@@ -15,6 +60,7 @@ This application is a Laravel application and its main Laravel ecosystems packag
 - laravel/prompts (PROMPTS) - v0
 - laravel/wayfinder (WAYFINDER) - v0
 - laravel/boost (BOOST) - v2
+- laravel/breeze (BREEZE) - v2
 - laravel/mcp (MCP) - v0
 - laravel/pail (PAIL) - v1
 - laravel/pint (PINT) - v1
