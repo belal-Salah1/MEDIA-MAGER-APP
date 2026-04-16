@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ImageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VideoController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -23,8 +24,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
+    // routes for image resource controller, only index, create, store and destroy methods
     Route::resource('images', ImageController::class)
+        ->only(['index', 'create', 'store', 'destroy']);
+    // routes for video resource controller, only index, create, store and destroy methods
+    Route::resource('videos', VideoController::class)
         ->only(['index', 'create', 'store', 'destroy']);
 });
 
