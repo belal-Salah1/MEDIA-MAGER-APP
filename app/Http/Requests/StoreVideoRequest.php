@@ -22,14 +22,13 @@ class StoreVideoRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'video' => [
-                'required',
+            'videos' => ['required', 'array', 'min:1', 'max:10'],
+            'videos.*' => [
                 'file',
                 'mimes:mp4,mov,avi,webm',
                 'mimetypes:video/mp4,video/quicktime,video/x-msvideo,video/webm',
                 'max:102400', // 100 MB
             ],
-            'name' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

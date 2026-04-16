@@ -22,14 +22,13 @@ class StoreImageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'image' => [
-                'required',
+            'images' => ['required', 'array', 'min:1', 'max:20'],
+            'images.*' => [
                 'file',
                 'image',
                 'mimes:jpg,jpeg,png,webp,gif',
                 'max:5120', // 5 MB
             ],
-            'name' => ['nullable', 'string', 'max:255'],
         ];
     }
 }

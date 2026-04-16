@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreImageRequest;
 use App\Models\Image;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,21 +32,27 @@ class ImageController extends Controller
 
     public function store(StoreImageRequest $request): RedirectResponse
     {
-        $request->validated();
 
-        $file = $request->file('image');
         $disk = 'public';
-        $path = $file->store('images/'.auth()->id(), $disk);
+        $files = $request->file('images');
 
-        auth()->user()->images()->create([
-            'name' => $request->input('name') ?: $file->getClientOriginalName(),
-            'path' => $path,
-            'disk' => $disk,
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-        ]);
+        DB::transaction(function () use ($files, $disk) {
+            foreach ($files as $file) {
+                $path = $file->store('images/'.auth()->id(), $disk);
 
-        return to_route('images.index')->with('success', 'Image uploaded successfully!');
+                auth()->user()->images()->create([
+                    'name' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'disk' => $disk,
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                ]);
+            }
+        });
+
+        $count = count($files);
+
+        return to_route('images.index')->with('success', $count.' '.str('image')->plural($count).' uploaded successfully!');
     }
 
     public function destroy(Image $image): RedirectResponse

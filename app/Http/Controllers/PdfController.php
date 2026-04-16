@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePdfRequest;
 use App\Models\Pdf;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -31,19 +32,26 @@ class PdfController extends Controller
 
     public function store(StorePdfRequest $request): RedirectResponse
     {
-        $file = $request->file('pdf');
         $disk = 'public';
-        $path = $file->store('pdfs/'.auth()->id(), $disk);
+        $files = $request->file('pdfs');
 
-        auth()->user()->pdfs()->create([
-            'name' => $request->input('name') ?: $file->getClientOriginalName(),
-            'path' => $path,
-            'disk' => $disk,
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-        ]);
+        DB::transaction(function () use ($files, $disk) {
+            foreach ($files as $file) {
+                $path = $file->store('pdfs/'.auth()->id(), $disk);
 
-        return to_route('pdfs.index')->with('success', 'PDF uploaded successfully!');
+                auth()->user()->pdfs()->create([
+                    'name' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'disk' => $disk,
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                ]);
+            }
+        });
+
+        $count = count($files);
+
+        return to_route('pdfs.index')->with('success', $count.' '.str('PDF')->plural($count).' uploaded successfully!');
     }
 
     public function destroy(Pdf $pdf): RedirectResponse

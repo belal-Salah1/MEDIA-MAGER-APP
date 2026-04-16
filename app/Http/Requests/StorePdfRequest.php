@@ -23,8 +23,12 @@ class StorePdfRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'pdf' => ['required', 'file', 'mimes:pdf', 'max:10240'], // Max size 10MB
-            'name' => ['nullable', 'string', 'max:255'],
+            'pdfs' => ['required', 'array', 'min:1', 'max:20'],
+            'pdfs.*' => [
+                'file',
+                'mimes:pdf',
+                'max:10240', // 10 MB
+            ],
         ];
     }
 }

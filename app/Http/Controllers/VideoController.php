@@ -6,6 +6,7 @@ use App\Http\Requests\StoreVideoRequest;
 use App\Models\Video;
 use getID3;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -32,27 +33,33 @@ class VideoController extends Controller
 
     public function store(StoreVideoRequest $request): RedirectResponse
     {
-        $file = $request->file('video');
         $disk = 'public';
-        $path = $file->store('videos/'.auth()->id(), $disk);
-
+        $files = $request->file('videos');
         $getID3 = new getID3;
-        $metadata = $getID3->analyze($file->getRealPath());
 
-        $videoStream = $metadata['video'] ?? [];
+        DB::transaction(function () use ($files, $disk, $getID3) {
+            foreach ($files as $file) {
+                $path = $file->store('videos/'.auth()->id(), $disk);
 
-        auth()->user()->videos()->create([
-            'name' => $request->input('name') ?: $file->getClientOriginalName(),
-            'path' => $path,
-            'disk' => $disk,
-            'mime_type' => $file->getMimeType(),
-            'size' => $file->getSize(),
-            'duration' => isset($metadata['playtime_seconds']) ? (int) $metadata['playtime_seconds'] : null,
-            'width' => isset($videoStream['resolution_x']) ? (int) $videoStream['resolution_x'] : null,
-            'height' => isset($videoStream['resolution_y']) ? (int) $videoStream['resolution_y'] : null,
-        ]);
+                $metadata = $getID3->analyze($file->getRealPath());
+                $videoStream = $metadata['video'] ?? [];
 
-        return to_route('videos.index')->with('success', 'Video uploaded successfully!');
+                auth()->user()->videos()->create([
+                    'name' => $file->getClientOriginalName(),
+                    'path' => $path,
+                    'disk' => $disk,
+                    'mime_type' => $file->getMimeType(),
+                    'size' => $file->getSize(),
+                    'duration' => isset($metadata['playtime_seconds']) ? (int) $metadata['playtime_seconds'] : null,
+                    'width' => isset($videoStream['resolution_x']) ? (int) $videoStream['resolution_x'] : null,
+                    'height' => isset($videoStream['resolution_y']) ? (int) $videoStream['resolution_y'] : null,
+                ]);
+            }
+        });
+
+        $count = count($files);
+
+        return to_route('videos.index')->with('success', $count.' '.str('video')->plural($count).' uploaded successfully!');
     }
 
     public function destroy(Video $video): RedirectResponse
