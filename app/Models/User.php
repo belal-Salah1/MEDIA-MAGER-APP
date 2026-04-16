@@ -39,4 +39,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Video::class);
     }
+
+    public function pdfs()
+    {
+        return $this->hasMany(Pdf::class);
+    }
 }

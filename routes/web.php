@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ImageController;
+use App\Http\Controllers\PdfController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\VideoController;
 use Illuminate\Foundation\Application;
@@ -29,6 +30,8 @@ Route::middleware('auth')->group(function () {
         ->only(['index', 'create', 'store', 'destroy']);
     // routes for video resource controller, only index, create, store and destroy methods
     Route::resource('videos', VideoController::class)
+        ->only(['index', 'create', 'store', 'destroy']);
+    Route::resource('pdfs', PdfController::class)
         ->only(['index', 'create', 'store', 'destroy']);
 });
 
