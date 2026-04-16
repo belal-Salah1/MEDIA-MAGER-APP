@@ -27,12 +27,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     // routes for image resource controller, only index, create, store and destroy methods
     Route::resource('images', ImageController::class)
-        ->only(['index', 'create', 'store', 'destroy']);
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
     // routes for video resource controller, only index, create, store and destroy methods
     Route::resource('videos', VideoController::class)
-        ->only(['index', 'create', 'store', 'destroy']);
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
     Route::resource('pdfs', PdfController::class)
-        ->only(['index', 'create', 'store', 'destroy']);
+        ->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
+
 });
 
 require __DIR__.'/auth.php';

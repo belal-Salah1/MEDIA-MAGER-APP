@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreImageRequest;
+use App\Http\Requests\UpdateImageRequest;
 use App\Models\Image;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -53,6 +54,22 @@ class ImageController extends Controller
         $count = count($files);
 
         return to_route('images.index')->with('success', $count.' '.str('image')->plural($count).' uploaded successfully!');
+    }
+
+    public function edit(Image $image): Response
+    {
+        abort_if($image->user_id !== auth()->id(), HttpResponse::HTTP_FORBIDDEN);
+
+        return Inertia::render('Image/Edit', [
+            'image' => $image,
+        ]);
+    }
+
+    public function update(UpdateImageRequest $request, Image $image): RedirectResponse
+    {
+        $image->update(['name' => $request->validated('name')]);
+
+        return to_route('images.index')->with('success', 'Image renamed successfully!');
     }
 
     public function destroy(Image $image): RedirectResponse

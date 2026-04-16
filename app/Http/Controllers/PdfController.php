@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePdfRequest;
+use App\Http\Requests\UpdatePdfRequest;
 use App\Models\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
@@ -52,6 +53,22 @@ class PdfController extends Controller
         $count = count($files);
 
         return to_route('pdfs.index')->with('success', $count.' '.str('PDF')->plural($count).' uploaded successfully!');
+    }
+
+    public function edit(Pdf $pdf): Response
+    {
+        abort_if($pdf->user_id !== auth()->id(), HttpResponse::HTTP_FORBIDDEN);
+
+        return Inertia::render('Pdf/Edit', [
+            'pdf' => $pdf,
+        ]);
+    }
+
+    public function update(UpdatePdfRequest $request, Pdf $pdf): RedirectResponse
+    {
+        $pdf->update(['name' => $request->validated('name')]);
+
+        return to_route('pdfs.index')->with('success', 'PDF renamed successfully!');
     }
 
     public function destroy(Pdf $pdf): RedirectResponse

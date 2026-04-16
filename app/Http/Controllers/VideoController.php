@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreVideoRequest;
+use App\Http\Requests\UpdateVideoRequest;
 use App\Models\Video;
 use getID3;
 use Illuminate\Http\RedirectResponse;
@@ -60,6 +61,22 @@ class VideoController extends Controller
         $count = count($files);
 
         return to_route('videos.index')->with('success', $count.' '.str('video')->plural($count).' uploaded successfully!');
+    }
+
+    public function edit(Video $video): Response
+    {
+        abort_if($video->user_id !== auth()->id(), HttpResponse::HTTP_FORBIDDEN);
+
+        return Inertia::render('Video/Edit', [
+            'video' => $video,
+        ]);
+    }
+
+    public function update(UpdateVideoRequest $request, Video $video): RedirectResponse
+    {
+        $video->update(['name' => $request->validated('name')]);
+
+        return to_route('videos.index')->with('success', 'Video renamed successfully!');
     }
 
     public function destroy(Video $video): RedirectResponse
